@@ -1,0 +1,146 @@
+	
+	<!DOCTYPE html>
+<htm
+l lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iPHONE 15 EXPLORER</title>
+    <style>
+        :root { --neon: #00ff41; --bg: #000; --folder: #ffd700; --count: #ff4444; }
+        
+        body { 
+            background: var(--bg); color: #fff; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 10px; overflow-x: hidden; 
+        }
+
+        /* Responsive Header */
+        .header { text-align: center; padding: 15px 0; border-bottom: 1px solid #333; margin-bottom: 15px; }
+        .header h2 { font-size: 1.2rem; color: var(--neon); margin: 0; }
+
+        .explorer-container { 
+            background: #111; border-radius: 12px; padding: 5px; 
+            border: 1px solid #222; word-wrap: break-word; 
+        }
+
+        .node { 
+            margin-left: 12px; border-left: 1px solid #333; 
+            padding-left: 10px; margin-top: 8px; position: relative;
+        }
+
+        .line-item { display: flex; align-items: flex-start; gap: 5px; padding: 5px 0; }
+        
+        .toggle-btn { 
+            min-width: 25px; height: 25px; background: #222; 
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 4px; color: var(--folder); font-size: 14px; font-weight: bold;
+        }
+
+        .key { color: #58a6ff; font-weight: 600; font-size: 14px; flex-shrink: 1; }
+        .value { color: #ffa657; font-size: 13px; line-height: 1.4; word-break: break-all; }
+
+        /* Badge for iPhone screen */
+        .item-count { 
+            background: var(--count); color: #fff; border-radius: 5px; 
+            padding: 2px 6px; font-size: 10px; font-weight: 800;
+            margin-left: auto; white-space: nowrap;
+        }
+
+        .hidden { display: none; }
+        
+        /* Mobile Sticky Buttons */
+        .controls { 
+            position: sticky; bottom: 20px; left: 0; right: 0;
+            display: flex; gap: 10px; justify-content: center; padding: 10px;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); border-radius: 50px;
+            z-index: 999;
+        }
+
+        button { 
+            background: #333; color: #fff; border: none; padding: 10px 18px; 
+            border-radius: 20px; font-size: 12px; font-weight: bold;
+        }
+        .refresh-btn { background: var(--neon); color: #000; }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+</head>
+<body>
+
+    <div class="header">
+        <h2>iPHONE PATH SCANNER</h2>
+        <div id="stat" style="font-size: 10px; color: #888; margin-top: 5px;">RESEARCHING NODES...</div>
+    </div>
+
+    <div class="explorer-container" id="explorer">
+        <div style="text-align: center; padding: 30px; color: #555;">Connecting to Server...</div>
+    </div>
+
+    <div class="controls">
+        <button onclick="expandAll()">EXPAND ALL</button>
+        <button onclick="collapseAll()">COLLAPSE</button>
+        <button class="refresh-btn" onclick="location.reload()">REFRESH</button>
+    </div>
+
+    <script>
+        const config = { 
+            apiKey: "AIzaSyD5ASA1R6bcL1tEgoQvkfd9unw_xWQ", 
+            databaseURL: "https://sugardaddy-26ef9-default-rtdb.firebaseio.com" 
+        };
+        firebase.initializeApp(config);
+        const db = firebase.database().ref("/");
+
+        db.on("value", (snapshot) => {
+            const data = snapshot.val();
+            const container = document.getElementById("explorer");
+            container.innerHTML = "";
+            if (data) renderNode(data, container, "ROOT");
+        });
+
+        function renderNode(obj, parentElement, keyName) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "node";
+            const isObject = typeof obj === "object" && obj !== null;
+            const line = document.createElement("div");
+            line.className = "line-item";
+
+            if (isObject) {
+                const keys = Object.keys(obj);
+                const count = keys.length;
+                line.innerHTML = `
+                    <div class="toggle-btn" onclick="toggle(this)">+</div>
+                    <span class="key">${keyName}</span>
+                    <span class="item-count">${count} items</span>
+                `;
+                const childrenContainer = document.createElement("div");
+                childrenContainer.className = "hidden content";
+                keys.forEach(k => renderNode(obj[k], childrenContainer, k));
+                wrapper.appendChild(line);
+                wrapper.appendChild(childrenContainer);
+            } else {
+                line.innerHTML = `<span class="key">${keyName}:</span> <span class="value">${obj}</span>`;
+                wrapper.appendChild(line);
+            }
+            parentElement.appendChild(wrapper);
+        }
+
+        function toggle(btn) {
+            const content = btn.parentElement.nextElementSibling;
+            const isHidden = content.classList.toggle("hidden");
+            btn.innerText = isHidden ? "+" : "-";
+            btn.style.color = isHidden ? "var(--folder)" : "#888";
+        }
+
+        function expandAll() {
+            document.querySelectorAll(".content").forEach(c => c.classList.remove("hidden"));
+            document.querySelectorAll(".toggle-btn").forEach(b => b.innerText = "-");
+        }
+
+        function collapseAll() {
+            document.querySelectorAll(".content").forEach(c => c.classList.add("hidden"));
+            document.querySelectorAll(".toggle-btn").forEach(b => b.innerText = "+");
+        }
+    </script>
+</body>
+</html>
